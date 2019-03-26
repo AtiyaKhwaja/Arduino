@@ -34,7 +34,8 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
-  while (WiFi.status() != WL_CONNECTED) {
+
+  while (WiFi.localIP().toString() == "0.0.0.0") {
     delay(500);
     Serial.print(".");
   }
@@ -62,7 +63,7 @@ void loop() {
   // This will send a string to the server
   Serial.println("sending data to server");
   if (client.connected()) {
-    client.println("00hello from ESP8266 Client");
+    client.println("hello from ESP8266 Client NaChaNachi");
   }
 
   // wait for data to be available
