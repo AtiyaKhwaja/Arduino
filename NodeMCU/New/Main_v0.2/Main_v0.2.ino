@@ -2,35 +2,38 @@
     This sketch establishes a TCP connection to a "quote of the day" service.
     It sends a "hello" message, and then prints received data.
 */
-//#include <EEPROM.h>
+
 #include <ESP8266WiFi.h>
-int id = 2;                           //**********NEEDS TO BE CHANGED PER NODE***************
-const char *ssidMy = "ESP8266_R2";    //**********NEEDS TO BE CHANGED PER NODE***************
-String ssid     = "ESP8266_R";
+//
+//#ifndef STASSID
+//#define STASSID "ESP8266_R1"
+//#define STAPSK  "123456789"
+//#endif
+
+//const char* ssid     = STASSID;
+//const char* password = STAPSK;
+const String ssid     = "ESP8266_R1";
 const String password = "123456789";
 
-//const char* host = "192.168.11.10";
+const char* host = "192.168.11.5";
 const uint16_t port = 80;
-boolean Flag[] = {false, false, false, false, false};
-String IPtable[] = {"192.168.11.5",
-                    "192.168.11.10",
-                    "192.168.11.15",
-                    "192.168.11.20",
-                    "192.168.11.25"
-                   };
 
 WiFiServer server(80);              // launches the server
 
-IPAddress local_ip(192, 168, 11, 10);  //**********NEEDS TO BE CHANGED PER NODE***************
+IPAddress local_ip(192, 168, 11, 10);      //**********NEEDS TO BE CHANGED PER NODE***************
 IPAddress gateway(192, 168, 0, 1);  // WiFi router's IP
 IPAddress subnet(255, 255, 255, 0);
 
 
 void setup() {
   pinMode(2, OUTPUT);
-  //EEPROM.begin(512);
   Serial.begin(115200);
+
   Serial.println();
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
 
   WiFi.mode(WIFI_AP_STA);
 
@@ -43,68 +46,10 @@ void setup() {
 void loop() {
   recieveDataClient();
   int t = 0;
-  t = Serial.read() - 48;
+  t = Serial.read();
   if (t > 0) {
-    Serial.println("******1st checkpoint******");
-    codeDecipher("11111");
+    sendD();
     t = 0;
-    Serial.print("Flag: ");
-    for (int i = 0; i < 5; i = i + 1) {
-      Serial.print(Flag[i]);
-    }
-  }
-
-}
-
-//***************************************************************************************************************************
-void Checking() {
-  if (Flag[id - 1]) {
-    broadcast("111");
-    blnk(2,100);
-  }
-
-}
-//***************************************************************************************************************************
-void broadcast(String C) {
-  Serial.println("******Dhuksi broadcast a checkpoint******");
-  String sndcd = (String)id + "1" + C;
-  Serial.println(sndcd);
-
-  for (int we = 1; we <= 4; we++) {
-    if (we != id && !Flag[we - 1]) {
-      sendD(we, sndcd);
-    }
-  }
-  Serial.print("Flag: ");
-  for (int i = 0; i < 5; i = i + 1) {
-    Serial.print(Flag[i]);
-  }
-}
-
-//***************************************************************************************************************************
-void codeDecipher(String code) {
-  String rcvr = code.substring(0, 1);
-  code.remove(0, 1);
-
-  String UniBroad = code.substring(1, 2);
-  code.remove(1, 1);
-  Serial.println("******2nd checkpoint katakati ses******");
-  Serial.println(code);
-
-  if (code == "111") {
-    Flag[id - 1] = true;
-  }
-  else if (code == "000") {
-    Flag[id - 1] = false;
-  }
-  Serial.println("******1Broadcast a dhuktesi checkpoint******");
-  Serial.println(UniBroad);
-
-  for (int i = 0; i < 5; i = i + 1) {
-    Serial.print(Flag[i]);
-  }
-  if (UniBroad == "1") {
-    broadcast(code);
   }
 
 }
@@ -122,22 +67,19 @@ void recieveDataClient() {
   // Read the first line of the request
   String req = client.readStringUntil('\r');
 
-  Serial.print(F("request from R"));
-  Serial.println(req.substring(0, 1));
+  Serial.println(F("request: "));
+  Serial.println(req);
+
   Serial.println(F("sending data....."));
-  client.print("101");//ACK
+  client.print("ACK: data receieved thanku");
   Serial.println();
   Serial.println("closing connection");
   client.stop();
   blnk(3, 200);
-
-  codeDecipher(req);
 }
 //***************************************************************************************************************************
-void sendD(int Rnum, String msg) {
-  ConSTA(Rnum);
-  String host = IPtable[Rnum - 1];
-
+void sendD() {
+  ConSTA();
   Serial.print("connecting to ");
   Serial.print(host);
   Serial.print(':');
@@ -147,14 +89,14 @@ void sendD(int Rnum, String msg) {
   WiFiClient client;
   if (!client.connect(host, port)) {
     Serial.println("connection failed");
-    delay(1000);
+    delay(5000);
     return;
   }
 
   // This will send a string to the server
   Serial.println("sending data to server");
   if (client.connected()) {
-    client.println(msg);
+    client.println("hello from ESP8266 Client NaChaNachi");
   }
 
   // wait for data to be available
@@ -163,7 +105,7 @@ void sendD(int Rnum, String msg) {
     if (millis() - timeout > 5000) {
       Serial.println(">>> Client Timeout !");
       client.stop();
-      delay(10000);
+      delay(60000);
       return;
     }
   }
@@ -182,29 +124,18 @@ void sendD(int Rnum, String msg) {
   client.stop();
   WiFi.disconnect();
   WiFi.mode(WIFI_AP);
-
-
-  String M =  msg.substring(2, 5);
-  if (M == "111") {
-    Flag[Rnum - 1] = true;
-  } else if (M == "000") {
-    Flag[Rnum - 1] = false;
-  }
-
-
-
   //  delay(300000); // execute once every 5 minutes, don't flood remote service
 }
 //***************************************************************************************************************************
 void ConAP() {
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(local_ip, gateway, subnet);
-  WiFi.softAP(ssidMy, "123456789");
+  WiFi.softAP("ESP8266_R2", "123456789");
 
 
   Serial.println(WiFi.status());
   Serial.print("Access Point \"");
-  Serial.print(ssidMy);
+  Serial.print("ESP8266_R2");
   Serial.println("\" started");
   Serial.print("IP address:\t");
   Serial.println(WiFi.softAPIP());// Start the access point
@@ -212,23 +143,15 @@ void ConAP() {
   server.begin();
 }
 //***************************************************************************************************************************
-void ConSTA(int Rnum) {
-  String ssidTemp = ssid + Rnum;
+void ConSTA() {
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssidTemp, password);
-  int hu = 1;
+  WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
-    if (hu == 10) {
-      WiFi.mode(WIFI_AP);
-      return;
-    } else {
-      hu++;
-    }
   }
 
-  Serial.println("*");
+  Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());

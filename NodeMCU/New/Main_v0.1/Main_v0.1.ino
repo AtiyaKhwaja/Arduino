@@ -12,11 +12,18 @@
 
 //const char* ssid     = STASSID;
 //const char* password = STAPSK;
-const String ssid     = "ESP8266_R1";
+const String ssid     = "ESP8266_R2";
 const String password = "123456789";
 
-const char* host = "192.168.11.5";
+const char* host = "192.168.11.10";
 const uint16_t port = 80;
+
+WiFiServer server(80);              // launches the server
+
+IPAddress local_ip(192, 168, 11, 5);      //**********NEEDS TO BE CHANGED PER NODE***************
+IPAddress gateway(192, 168, 0, 1);  // WiFi router's IP
+IPAddress subnet(255, 255, 255, 0);
+
 
 void setup() {
   Serial.begin(115200);
@@ -28,25 +35,27 @@ void setup() {
   Serial.print("Connecting to ");
   Serial.println(ssid);
 
-  /* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
-     would try to act as both a client and an access-point and could cause
-     network-issues with your other WiFi-devices on your WiFi-network. */
+
   WiFi.mode(WIFI_AP_STA);
-  WiFi.begin(ssid, password);
 
+  ConAP();
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
 }
 
+
+
 void loop() {
+  int t = 0;
+  t = Serial.read();
+  if (t > 0) {
+    sendD();
+    t = 0;
+  }
+
+}
+
+void sendD() {
+  ConSTA();
   Serial.print("connecting to ");
   Serial.print(host);
   Serial.print(':');
@@ -89,6 +98,37 @@ void loop() {
   Serial.println();
   Serial.println("closing connection");
   client.stop();
+WiFi.disconnect();
+  //  delay(300000); // execute once every 5 minutes, don't flood remote service
+}
 
-  delay(300000); // execute once every 5 minutes, don't flood remote service
+void ConAP() {
+  WiFi.mode(WIFI_AP);
+  WiFi.softAPConfig(local_ip, gateway, subnet);
+  WiFi.softAP("ESP8266_R1", "123456789");
+
+
+  Serial.println(WiFi.status());
+  Serial.print("Access Point \"");
+  Serial.print("ESP8266_R1");
+  Serial.println("\" started");
+  Serial.print("IP address:\t");
+  Serial.println(WiFi.softAPIP());// Start the access point
+  // Send the IP address of the ESP8266 to the computer
+  server.begin();
+}
+
+void ConSTA() {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+
 }

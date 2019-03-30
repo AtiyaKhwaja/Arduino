@@ -4,7 +4,7 @@
 
 // Include the Wi-Fi library
 #ifndef APSSID
-#define APSSID "ESP8266_R1"
+#define APSSID "ESP8266_R3" //**********NEEDS TO BE CHANGED PER NODE***************
 #define APPSK  "123456789"
 #endif
 
@@ -14,7 +14,7 @@ const char *password = APPSK;
 //ESP8266WebServer server(80);
 WiFiServer server(80);              // launches the server
 
-IPAddress local_ip(192, 168, 11, 5);      // fix IP of the server
+IPAddress local_ip(192, 168, 11, 15);      //**********NEEDS TO BE CHANGED PER NODE***************
 IPAddress gateway(192, 168, 0, 1);  // WiFi router's IP
 IPAddress subnet(255, 255, 255, 0);
 
@@ -87,6 +87,10 @@ void recieveDataFromClient() {
 
   Serial.println(F("sending data....."));
   client.print("ACK: data receieved thanku");
+  Serial.println();
+  Serial.println("closing connection");
+  client.stop();
+    blnk(3);
 }
 
 void blnk(int a) {

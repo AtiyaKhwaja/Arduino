@@ -4,8 +4,8 @@
 */
 //#include <EEPROM.h>
 #include <ESP8266WiFi.h>
-int id = 2;                           //**********NEEDS TO BE CHANGED PER NODE***************
-const char *ssidMy = "ESP8266_R2";    //**********NEEDS TO BE CHANGED PER NODE***************
+int id = 1;                           //**********NEEDS TO BE CHANGED PER NODE***************
+const char *ssidMy = "ESP8266_R1";    //**********NEEDS TO BE CHANGED PER NODE***************
 String ssid     = "ESP8266_R";
 const String password = "123456789";
 
@@ -21,7 +21,7 @@ String IPtable[] = {"192.168.11.5",
 
 WiFiServer server(80);              // launches the server
 
-IPAddress local_ip(192, 168, 11, 10);  //**********NEEDS TO BE CHANGED PER NODE***************
+IPAddress local_ip(192, 168, 11, 5);  //**********NEEDS TO BE CHANGED PER NODE***************
 IPAddress gateway(192, 168, 0, 1);  // WiFi router's IP
 IPAddress subnet(255, 255, 255, 0);
 
@@ -57,28 +57,17 @@ void loop() {
 }
 
 //***************************************************************************************************************************
-void Checking() {
-  if (Flag[id - 1]) {
-    broadcast("111");
-    blnk(2,100);
-  }
-
-}
-//***************************************************************************************************************************
 void broadcast(String C) {
   Serial.println("******Dhuksi broadcast a checkpoint******");
   String sndcd = (String)id + "1" + C;
   Serial.println(sndcd);
 
   for (int we = 1; we <= 4; we++) {
-    if (we != id && !Flag[we - 1]) {
+    if (we != id) {
       sendD(we, sndcd);
     }
   }
-  Serial.print("Flag: ");
-  for (int i = 0; i < 5; i = i + 1) {
-    Serial.print(Flag[i]);
-  }
+
 }
 
 //***************************************************************************************************************************
@@ -147,7 +136,7 @@ void sendD(int Rnum, String msg) {
   WiFiClient client;
   if (!client.connect(host, port)) {
     Serial.println("connection failed");
-    delay(1000);
+    delay(5000);
     return;
   }
 
@@ -163,7 +152,7 @@ void sendD(int Rnum, String msg) {
     if (millis() - timeout > 5000) {
       Serial.println(">>> Client Timeout !");
       client.stop();
-      delay(10000);
+      delay(60000);
       return;
     }
   }
@@ -184,7 +173,7 @@ void sendD(int Rnum, String msg) {
   WiFi.mode(WIFI_AP);
 
 
-  String M =  msg.substring(2, 5);
+  String M =  msg.substring(2,5);
   if (M == "111") {
     Flag[Rnum - 1] = true;
   } else if (M == "000") {
@@ -221,7 +210,6 @@ void ConSTA(int Rnum) {
     delay(500);
     Serial.print(".");
     if (hu == 10) {
-      WiFi.mode(WIFI_AP);
       return;
     } else {
       hu++;
