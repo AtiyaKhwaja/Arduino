@@ -6,7 +6,7 @@
 #include <ESP8266WiFi.h>
 int buzzer = D6;
 int smoke = A0;
-int sensorThreshold = 80;
+int sensorThreshold = 25;
 
 int id = 1;                           //**********NEEDS TO BE CHANGED PER NODE***************
 const char *ssidMy = "ESP8266_R1";    //**********NEEDS TO BE CHANGED PER NODE***************
@@ -50,17 +50,17 @@ void loop() {
   recieveDataClient();
   Checking();
   gas();
-  int t = 0;
-  t = Serial.read() - 48;
-  if (t == 1) {
-    Serial.println("******1st checkpoint******");
-    codeDecipher("11111");
-    t = 0;
-  } else if (t == 2) {
-    Serial.println("******1st checkpoint******");
-    codeDecipher("11000");
-    t = 0;
-  }
+//  int t = 0;
+//  t = Serial.read() - 48;
+//  if (t > 0) {
+//    Serial.println("******1st checkpoint******");
+//    codeDecipher("11111");
+//    t = 0;
+//    Serial.print("Flag: ");
+//    for (int i = 0; i < 5; i = i + 1) {
+//      Serial.print(Flag[i]);
+//    }
+//  }
 
 }
 
@@ -81,8 +81,6 @@ void broadcast(String C) {
   for (int we = 1; we <= 4; we++) {
     if (we != id && !Flag[we - 1]) {
       sendD(we, sndcd);
-      blnk(2, 100);
-      buzz();
     }
   }
   Serial.print("Flag: ");

@@ -4,8 +4,12 @@
 */
 //#include <EEPROM.h>
 #include <ESP8266WiFi.h>
-int id = 2;                           //**********NEEDS TO BE CHANGED PER NODE***************
-const char *ssidMy = "ESP8266_R2";    //**********NEEDS TO BE CHANGED PER NODE***************
+int buzzer = D6;
+int smoke = A0;
+int sensorThreshold = 29;
+
+int id = 3;                           //**********NEEDS TO BE CHANGED PER NODE***************
+const char *ssidMy = "ESP8266_R3";    //**********NEEDS TO BE CHANGED PER NODE***************
 String ssid     = "ESP8266_R";
 const String password = "123456789";
 
@@ -21,13 +25,15 @@ String IPtable[] = {"192.168.11.5",
 
 WiFiServer server(80);              // launches the server
 
-IPAddress local_ip(192, 168, 11, 10);  //**********NEEDS TO BE CHANGED PER NODE***************
+IPAddress local_ip(192, 168, 11, 15);  //**********NEEDS TO BE CHANGED PER NODE***************
 IPAddress gateway(192, 168, 0, 1);  // WiFi router's IP
 IPAddress subnet(255, 255, 255, 0);
 
 
 void setup() {
   pinMode(2, OUTPUT);
+  pinMode(buzzer, OUTPUT);
+  pinMode(smoke, INPUT);
   //EEPROM.begin(512);
   Serial.begin(115200);
   Serial.println();
@@ -42,43 +48,48 @@ void setup() {
 
 void loop() {
   recieveDataClient();
-  int t = 0;
-  t = Serial.read() - 48;
-  if (t > 0) {
-    Serial.println("******1st checkpoint******");
-    codeDecipher("11111");
-    t = 0;
-    Serial.print("Flag: ");
-    for (int i = 0; i < 5; i = i + 1) {
-      Serial.print(Flag[i]);
-    }
-  }
+  Checking();
+  //gas();
+  //  int t = 0;
+  //  t = Serial.read() - 48;
+  //  if (t > 0) {
+  //    Serial.println("******1st checkpoint******");
+  //    codeDecipher("11111");
+  //    t = 0;
+  //    Serial.print("Flag: ");
+  //    for (int i = 0; i < 5; i = i + 1) {
+  //      Serial.print(Flag[i]);
+  //    }
+  //  }
 
 }
 
 //***************************************************************************************************************************
 void Checking() {
   if (Flag[id - 1]) {
-    broadcast("111");
-    blnk(2,100);
+    //broadcast("111");
+    blnk(2, 100);
+    buzz();
   }
-
 }
 //***************************************************************************************************************************
 void broadcast(String C) {
-  Serial.println("******Dhuksi broadcast a checkpoint******");
+  //Serial.println("******Dhuksi broadcast a checkpoint******");
   String sndcd = (String)id + "1" + C;
-  Serial.println(sndcd);
+  //Serial.println(sndcd);
 
   for (int we = 1; we <= 4; we++) {
     if (we != id && !Flag[we - 1]) {
       sendD(we, sndcd);
+      blnk(2, 100);
+      buzz();
     }
   }
   Serial.print("Flag: ");
   for (int i = 0; i < 5; i = i + 1) {
     Serial.print(Flag[i]);
   }
+  Serial.println();
 }
 
 //***************************************************************************************************************************
@@ -88,8 +99,8 @@ void codeDecipher(String code) {
 
   String UniBroad = code.substring(1, 2);
   code.remove(1, 1);
-  Serial.println("******2nd checkpoint katakati ses******");
-  Serial.println(code);
+  //Serial.println("******2nd checkpoint katakati ses******");
+  //Serial.println(code);
 
   if (code == "111") {
     Flag[id - 1] = true;
@@ -97,8 +108,8 @@ void codeDecipher(String code) {
   else if (code == "000") {
     Flag[id - 1] = false;
   }
-  Serial.println("******1Broadcast a dhuktesi checkpoint******");
-  Serial.println(UniBroad);
+  //Serial.println("******1Broadcast a dhuktesi checkpoint******");
+  //Serial.println(UniBroad);
 
   for (int i = 0; i < 5; i = i + 1) {
     Serial.print(Flag[i]);
@@ -235,11 +246,29 @@ void ConSTA(int Rnum) {
 
 }
 //***************************************************************************************************************************
+void gas() {
+  int analogSensor = analogRead(smoke);
+  Serial.println(analogSensor);
+  delay(100);
+  if (analogSensor > sensorThreshold) {
+    Flag[id - 1] = true;
+  }
+  delay(20);
+
+}
+//***************************************************************************************************************************
 void blnk(int a, int t) {
   for (int x = 0; x < a; x++) {
-    digitalWrite(2, HIGH);
-    delay(t);
     digitalWrite(2, LOW);
     delay(t);
+    digitalWrite(2, HIGH);
+    delay(t);
   }
+}
+//***************************************************************************************************************************
+void buzz() {
+  tone(buzzer, 1000);
+  delay(200);
+  noTone(buzzer);
+  delay(200);
 }
