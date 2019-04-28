@@ -6,7 +6,7 @@
 #include <ESP8266WiFi.h>
 int buzzer = D6;
 int smoke = A0;
-int sensorThreshold = 80;
+int sensorThreshold = 160;
 
 int id = 1;                           //**********NEEDS TO BE CHANGED PER NODE***************
 const char *ssidMy = "ESP8266_R1";    //**********NEEDS TO BE CHANGED PER NODE***************
@@ -78,7 +78,7 @@ void broadcast(String C) {
   String sndcd = (String)id + "1" + C;
   //Serial.println(sndcd);
 
-  for (int we = 1; we <= 4; we++) {
+  for (int we = 1; we <= 3; we++) {
     if (we != id && !Flag[we - 1]) {
       sendD(we, sndcd);
       blnk(2, 100);
@@ -248,8 +248,9 @@ void ConSTA(int Rnum) {
 //***************************************************************************************************************************
 void gas() {
   int analogSensor = analogRead(smoke);
+  Serial.print("Gas input: ");
   Serial.println(analogSensor);
-  delay(100);
+  delay(200);
   if (analogSensor > sensorThreshold) {
     Flag[id - 1] = true;
   }
